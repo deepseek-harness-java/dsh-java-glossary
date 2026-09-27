@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DSH Term Atlas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">TA</div>
+      <div><strong>Term Atlas</strong><span>Powered by Harness</span></div>
+    </div>
+    <button class="primary block" id="newConversation">＋ 新对话</button>
+    <div class="section-label"><span>对话记录</span></div>
+    <div id="conversationList" class="item-list conversation-list"></div>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <div class="title-row">
+          <span id="statusDot" class="dot"></span>
+          <h1 id="currentName">团队术语典</h1>
+        </div>
+        <p id="currentDetail">查术语、收录新词、从文档挖掘候选术语</p>
+      </div>
+      <div class="header-actions">
+        <button class="ghost" id="addTerm">＋ 收录术语</button>
+        <button class="ghost" id="mineDoc">⛏ 文档挖词</button>
+        <button class="ghost icon-btn" id="toggleTheme" title="切换主题">🌙</button>
+      </div>
+    </header>
+
+    <div id="workspace" class="workspace">
+      <section class="center">
+        <div id="chatMessages" class="chat-scroll"></div>
+        <div class="composer-wrap">
+          <div id="streamStatus" class="stream-status hidden">
+            <span id="streamStatusText"><span class="status-spinner"></span>AI 正在思考</span>
+          </div>
+          <div class="composer">
+            <textarea id="chatInput" rows="1" placeholder="询问术语，例如：QPS 是什么？新人入职该先懂哪些黑话？"></textarea>
+            <div class="composer-bar">
+              <span class="composer-hint"><kbd>⌘</kbd>+<kbd>↵</kbd> 发送 · 术语库只在本机</span>
+              <div class="composer-actions">
+                <button class="ghost small hidden" id="stopStream">停止</button>
+                <button class="send-btn" id="sendMessage" title="发送">↑</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="resource-sidebar">
+        <div class="resource-scroll">
+          <div class="resource-header">
+            <b>术语库</b>
+            <button class="ghost small" id="refreshResource">刷新</button>
+          </div>
+          <nav class="resource-tabs">
+            <button data-resource-tab="terms" class="active">词条</button>
+            <button data-resource-tab="card">双语卡</button>
+            <button data-resource-tab="conflicts">冲突</button>
+            <button data-resource-tab="stats">统计</button>
+          </nav>
+          <section class="panel" data-tab="terms">
+            <div class="panel-title"><span>全部词条</span></div>
+            <div class="panel-body" style="padding:8px">
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <input id="lookupInput" placeholder="搜索术语…" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit">
+                <button class="ghost small" id="lookupBtn">查询</button>
+              </div>
+              <div id="termsCard" class="muted">加载中…</div>
+            </div>
+          </section>
+          <section class="panel hidden" data-tab="card">
+            <div class="panel-title"><span>双语释义卡</span></div>
+            <div class="panel-body" style="padding:8px">
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <input id="cardInput" placeholder="术语关键词…" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit">
+                <button class="ghost small" id="cardBtn">生成</button>
+              </div>
+              <div id="cardResult" class="muted">输入关键词生成中/英/用例三面卡片</div>
+            </div>
+          </section>
+          <section class="panel hidden" data-tab="conflicts">
+            <div class="panel-title"><span>冲突检查</span></div>
+            <div id="conflictsCard" class="panel-body muted">点击"刷新"检查</div>
+          </section>
+          <section class="panel hidden" data-tab="stats">
+            <div class="panel-title"><span>术语统计</span></div>
+            <div id="statsCard" class="panel-body muted">点击"刷新"加载</div>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="modal hidden" id="termModal">
+    <form class="modal-card" id="termForm" style="width:560px">
+      <h2>收录新术语</h2>
+      <label>英文规范名<input name="en" required placeholder="Daily Standup"></label>
+      <label>中文正名<input name="zh" placeholder="每日站会"></label>
+      <label>别名（逗号分隔）<input name="aliases" placeholder="站会, 晨会"></label>
+      <label>分类标签<input name="tag" placeholder="Scrum / 性能 / 架构"></label>
+      <label>释义<textarea name="definition" required rows="3" style="font:inherit;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)" placeholder="一句话说清这个术语是什么…"></textarea></label>
+      <label>例句 / 团队用法<input name="example" placeholder="例句：明早 10 点 Daily Standup…"></label>
+      <p class="muted small">重复英文名不会覆盖他人释义，会自动转评审意见。数据保存在本机 ~/.dsh-java-glossary/。</p>
+      <div class="modal-actions"><button type="button" class="ghost" id="cancelModal">取消</button><button class="primary">收录</button></div>
+    </form>
+  </div>
+  <div class="modal hidden" id="mineModal">
+    <form class="modal-card" id="mineForm" style="width:560px">
+      <h2>从文档挖候选术语</h2>
+      <label>文档文本<textarea name="text" required rows="10" style="font:inherit;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)" placeholder="粘贴一段团队文档、周报或需求文档…&#10;将按驼峰词/缩写频率挖掘候选术语，并提示中文映射。"></textarea></label>
+      <p class="muted small">只做候选挖掘，不会自动改库；确认后再"收录"。</p>
+      <div class="modal-actions"><button type="button" class="ghost" id="cancelMineModal">取消</button><button class="primary">挖掘</button></div>
+    </form>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
